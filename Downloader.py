@@ -3,73 +3,77 @@ from tkinter import ttk
 from tkinter import filedialog
 import yt_dlp
 import json
+import os
 
-last_save_location = ""
+# Define the path for the last_save_location.txt file
+save_location_file_path = os.path.join("C:/youtube_downloader", "last_save_location.txt")
 
-def open_supported_websites():
-    supported_websites_window = tk.Toplevel(root)
-    supported_websites_window.title("Supported Websites")
+# Check if the youtube_downloader folder exists, and create it if not
+if not os.path.exists("C:/youtube_downloader"):
+    os.makedirs("C:/youtube_downloader")
 
-    try:
-        with open("supported_websites.json", "r") as json_file:
-            supported_websites = json.load(json_file)
-    except FileNotFoundError:
-        supported_websites = []
+# Load last saved location from a file
+try:
+    with open(save_location_file_path, "r") as file:
+        last_save_location = file.read()
+except FileNotFoundError:
+    last_save_location = ""
 
-    listbox = tk.Listbox(supported_websites_window, width=50)
-    listbox.pack(padx=10, pady=10)
+class YouTubeDownloaderApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("YouTube Video Downloader")
 
-    for website in supported_websites:
-        listbox.insert(tk.END, website)
+        self.url_label = ttk.Label(master, text="Video URL:")
+        self.url_label.grid(row=0, column=0)
+        self.url_entry = ttk.Entry(master, width=50)
+        self.url_entry.grid(row=0, column=1, padx=10, pady=5)
 
-    search_entry = ttk.Entry(supported_websites_window, width=30)
-    search_entry.pack(padx=10, pady=5)
+        self.save_label = ttk.Label(master, text="Save Location:")
+        self.save_label.grid(row=1, column=0)
+        self.save_entry = ttk.Entry(master, width=50)
+        self.save_entry.grid(row=1, column=1, padx=10, pady=5)
 
-    search_button = ttk.Button(supported_websites_window, text="Search")
-    search_button.pack(padx=10, pady=5)
+        self.browse_button = ttk.Button(master, text="Browse", command=self.browse_save_location)
+        self.browse_button.grid(row=1, column=2, padx=10, pady=5)
 
-def browse_save_location():
-    global last_save_location  
-    save_location = filedialog.askdirectory(initialdir=last_save_location)
-    save_entry.delete(0, tk.END)
-    save_entry.insert(0, save_location)
-    last_save_location = save_location  
+        # Automatically fill the Save Location entry with the last downloaded folder
+        self.save_entry.insert(0, last_save_location)
 
-def download_video():
-    video_url = url_entry.get()
-    save_location = save_entry.get()
-    ydl_opts = {
-        'outtmpl': save_location + '/%(title)s.%(ext)s',
-        'skip_unavailable_fragments': True,
-    }
+        self.download_button = ttk.Button(master, text="Download", command=self.download_video)
+        self.download_button.grid(row=2, column=1, padx=10, pady=10)
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([video_url])
-        status_label.config(text="Download completed successfully!")
-    except Exception as e:
-        status_label.config(text="Error: " + str(e))
+        self.status_label = ttk.Label(master, text="")
+        self.status_label.grid(row=3, column=0, columnspan=2)
 
-root = tk.Tk()
-root.title("YouTube Video Downloader")
+    def browse_save_location(self):
+        global last_save_location
+        save_location = filedialog.askdirectory(initialdir=last_save_location)
+        self.save_entry.delete(0, tk.END)
+        self.save_entry.insert(0, save_location)
 
-url_label = ttk.Label(root, text="Video URL:")
-url_label.grid(row=0, column=0)
-url_entry = ttk.Entry(root, width=50)
-url_entry.grid(row=0, column=1, padx=10, pady=5)
+        # Save the last selected folder to a file
+        with open(save_location_file_path, "w") as file:
+            file.write(save_location)
 
-save_label = ttk.Label(root, text="Save Location:")
-save_label.grid(row=1, column=0)
-save_entry = ttk.Entry(root, width=50)
-save_entry.grid(row=1, column=1, padx=10, pady=5)
+        last_save_location = save_location
 
-browse_button = ttk.Button(root, text="Browse", command=browse_save_location)
-browse_button.grid(row=1, column=2, padx=10, pady=5)
+    def download_video(self):
+        video_url = self.url_entry.get()
+        save_location = self.save_entry.get()
+        ydl_opts = {
+            'outtmpl': save_location + '/%(title)s.%(ext)s',
+            'skip_unavailable_fragments': True,
+        }
 
-download_button = ttk.Button(root, text="Download", command=download_video)
-download_button.grid(row=2, column=1, padx=10, pady=10)
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([video_url])
+            self.status_label.config(text="Download completed successfully!")
+        except Exception as e:
+            self.status_label.config(text="Error: " + str(e))
 
-status_label = ttk.Label(root, text="")
-status_label.grid(row=3, column=0, columnspan=2)
-
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = YouTubeDownloaderApp(root)
+    root.mainloop()
