@@ -39,11 +39,8 @@ class YouTubeDownloaderApp:
         self.download_button = ttk.Button(master, text="Download", command=self.download_video)
         self.download_button.grid(row=2, column=1, padx=10, pady=10)
 
-        self.progress_bar = ttk.Progressbar(master, orient="horizontal", length=300, mode="determinate")
-        self.progress_bar.grid(row=3, column=1, pady=10)
-
         self.status_label = ttk.Label(master, text="")
-        self.status_label.grid(row=4, column=0, columnspan=2)
+        self.status_label.grid(row=3, column=0, columnspan=2)
 
     def browse_save_location(self):
         global last_save_location
@@ -62,7 +59,6 @@ class YouTubeDownloaderApp:
         ydl_opts = {
             'outtmpl': save_location + '/%(title)s.%(ext)s',
             'skip_unavailable_fragments': True,
-            'progress_hooks': [self.update_progress],
         }
 
         try:
@@ -71,16 +67,6 @@ class YouTubeDownloaderApp:
             self.status_label.config(text="Download completed successfully!")
         except Exception as e:
             self.status_label.config(text="Error: " + str(e))
-
-    def update_progress(self, d):
-        if d['status'] == 'finished':
-            self.progress_bar.stop()
-            self.progress_bar['value'] = 100  
-        elif d['status'] == 'downloading':
-            if 'eta' in d and d['eta'] is not None:
-                progress_percentage = float(d['_percent_str'].strip('%'))
-                self.progress_bar['value'] = progress_percentage
-                self.progress_bar.update()
 
 if __name__ == "__main__":
     root = tk.Tk()
