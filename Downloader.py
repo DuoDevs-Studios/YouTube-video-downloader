@@ -5,14 +5,11 @@ import yt_dlp
 import json
 import os
 
-# Define the path for the last_save_location.txt file
 save_location_file_path = os.path.join("C:/youtube_downloader", "last_save_location.txt")
 
-# Check if the youtube_downloader folder exists, and create it if not
 if not os.path.exists("C:/youtube_downloader"):
     os.makedirs("C:/youtube_downloader")
 
-# Load last saved location from a file
 try:
     with open(save_location_file_path, "r") as file:
         last_save_location = file.read()
@@ -52,7 +49,6 @@ class YouTubeDownloaderApp:
         self.save_entry.delete(0, tk.END)
         self.save_entry.insert(0, save_location)
 
-        # Save the last selected folder to a file
         with open(save_location_file_path, "w") as file:
             file.write(save_location)
 
