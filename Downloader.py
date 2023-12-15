@@ -5,25 +5,24 @@ import yt_dlp
 import json
 import os
 
-save_location_file_path = os.path.join("C:/youtube_downloader", "last_save_location.txt")
-dark_mode_file_path = os.path.join("C:/youtube_downloader", "dark_mode.txt")
+settings_folder = "C:/youtube_downloader_settings"
+save_location_file_path = os.path.join(settings_folder, "last_save_location.json")
+dark_mode_file_path = os.path.join(settings_folder, "dark_mode.json")
 
-if not os.path.exists("C:/youtube_downloader"):
-    os.makedirs("C:/youtube_downloader")
+if not os.path.exists(settings_folder):
+    os.makedirs(settings_folder)
 
 try:
     with open(save_location_file_path, "r") as file:
-        last_save_location = file.read()
-except FileNotFoundError:
+        last_save_location = json.load(file)["location"]
+except (FileNotFoundError, json.JSONDecodeError):
     last_save_location = ""
-
-dark_mode_enabled = False
 
 try:
     with open(dark_mode_file_path, "r") as file:
-        dark_mode_enabled = bool(int(file.read()))
-except FileNotFoundError:
-    pass
+        dark_mode_enabled = json.load(file)["enabled"]
+except (FileNotFoundError, json.JSONDecodeError):
+    dark_mode_enabled = False
 
 class YouTubeDownloaderApp:
     def __init__(self, master):
@@ -34,10 +33,7 @@ class YouTubeDownloaderApp:
         self.create_main_page()
 
     def set_theme(self):
-        theme = "clam"  
-
-        if dark_mode_enabled:
-            theme = "clam"  
+        theme = "clam" if dark_mode_enabled else "default"  
 
         style = ttk.Style()
         style.theme_use(theme)
@@ -47,8 +43,13 @@ class YouTubeDownloaderApp:
             style.configure("TLabel", background="#2C2F33", foreground="white")
             style.configure("TButton", background="#7289DA", foreground="white")
             style.configure("TEntry", fieldbackground="#4F5459", foreground="white")
+        else:
+            style.configure("TFrame", background="white")
+            style.configure("TLabel", background="white", foreground="black")
+            style.configure("TButton", background="white", foreground="black")
+            style.configure("TEntry", fieldbackground="white", foreground="black")
 
-        self.master.configure(bg="#2C2F33")
+        self.master.configure(bg="#2C2F33" if dark_mode_enabled else "white")
 
     def create_main_page(self):
         self.url_label = ttk.Label(self.master, text="Video URL:")
@@ -79,7 +80,7 @@ class YouTubeDownloaderApp:
         self.options_window = tk.Toplevel(self.master)
         self.options_window.title("Options")
 
-        self.options_window.geometry("300x150")
+        self.options_window.geometry("300x150")  
 
         dark_mode_label = ttk.Label(self.options_window, text="Dark Mode:")
         dark_mode_label.grid(row=0, column=0, padx=10, pady=10)
@@ -97,7 +98,7 @@ class YouTubeDownloaderApp:
         dark_mode_enabled = not dark_mode_enabled
 
         with open(dark_mode_file_path, "w") as file:
-            file.write(str(int(dark_mode_enabled)))
+            json.dump({"enabled": dark_mode_enabled}, file)
 
         self.set_theme()
 
@@ -108,7 +109,7 @@ class YouTubeDownloaderApp:
         self.save_entry.insert(0, save_location)
 
         with open(save_location_file_path, "w") as file:
-            file.write(save_location)
+            json.dump({"location": save_location}, file)
 
         last_save_location = save_location
 
@@ -131,7 +132,7 @@ class YouTubeDownloaderApp:
         self.master.withdraw()
 
     def show_main_page(self):
-        self.options_window.destroy() 
+        self.options_window.destroy()  
         self.master.deiconify()
 
 if __name__ == "__main__":
